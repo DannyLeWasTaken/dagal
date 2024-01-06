@@ -5,8 +5,17 @@
 DAGAL abstracts Vulkan and is mainly only used by me.
 
 DAGAL is split into two parts:
-- **Main** - Contains only abstractions for Vulkan, but nothing more
-- **Utility** - Contains utility for Vulkan such as render graphs, lifetime management, etc.
+- **Abstraction** - Contains only abstractions for Vulkan, but nothing more
+- **Framework** - Contains utility for Vulkan such as render graphs, lifetime management, etc.
+
+
+## Minimum device requirements
+- - -
+We expect this to be used on devices which support at the minimum:
+- Dynamic Rendering
+- Descriptor Indexing
+
+tl;dr if your GPU supports Vulkan 1.3, you're already supported.
 
 
 ## To-dos (we will never finish them)
@@ -14,6 +23,8 @@ DAGAL is split into two parts:
 - [ ] Render Graph
 - [ ] Lifetime management using timeline semaphores
 - [ ] egui integration
+- [ ] GPU Resource Table
+
 
 ## Special thanks
 - - -

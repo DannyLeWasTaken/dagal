@@ -1,0 +1,16 @@
+//! [self] can be thought as a most minimal abstraction layer for [ash]
+//! # Lifetimes
+//! Lifetimes are managed in either two ways:
+//! - Reference counting using Arc
+//! - [utility::deferred_deletion_queue]
+//!
+//! It is important to note that both CAN be used.
+
+pub mod physical_device;
+pub mod utility;
+pub mod device;
+pub mod instance;
+pub mod resource;
+pub mod descriptors;
+pub mod queue;
+pub mod prelude;
