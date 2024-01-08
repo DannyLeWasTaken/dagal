@@ -6,11 +6,13 @@
 //!
 //! It is important to note that both CAN be used.
 
-pub mod physical_device;
-pub mod utility;
+mod debugging;
+pub mod descriptors;
 pub mod device;
 pub mod instance;
-pub mod resource;
-pub mod descriptors;
-pub mod queue;
+pub mod physical_device;
+mod pipeline;
 pub mod prelude;
+pub mod queue;
+pub mod resource;
+pub mod utility;

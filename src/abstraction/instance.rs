@@ -3,17 +3,15 @@
 use ash::vk;
 
 pub struct Instance {
-	pub handle: ash::Instance,
-	pub entry: ash::Entry,
+    pub handle: ash::Instance,
+    pub entry: ash::Entry,
 }
 
 pub struct InstanceCreateInfo {
-	pub required_extensions: Vec<String>,
-	pub validation_enabled: bool,
+    pub required_extensions: Vec<String>,
+    pub validation_enabled: bool,
 }
 
 impl Instance {
-	pub fn new(entry: ash::Entry, required_extensions: Vec<String>) {
-
-	}
+    pub fn new(entry: ash::Entry, required_extensions: Vec<String>) {}
 }
