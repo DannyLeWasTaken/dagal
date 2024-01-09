@@ -2,6 +2,7 @@
 
 use ash::vk;
 
+#[derive(Clone)]
 pub struct Instance {
     pub handle: ash::Instance,
     pub entry: ash::Entry,

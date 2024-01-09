@@ -10,14 +10,10 @@
 //! the public facing struct will make the Inner inaccessible.
 use std::sync::{Arc, Mutex};
 
-struct DeferredDeletionItem<T: ?Sized> {
+struct DeferredDeletionItem<T> {
+    item: T,
     /// Cycle # which the deferred item is deleted.
     end_cycle: u64,
-    /// Executes upon deletion, but may be optional as some structs may simply only
-    /// rely on the drop functionality
-    deletion_function: Option<Box<dyn FnOnce()>>,
-    /// Underlying resource represented
-    resource: Option<Box<T>>,
 }
 
 /// Any struct that implements [DeferredDeletable] can be pushed into a deferred deletion
@@ -28,14 +24,14 @@ pub trait DeferredDeletable {
 }
 
 /// This is a deferred deletion queue
-pub struct DeferredDeletionQueue {
+pub struct DeferredDeletionQueue<T> {
     /// Represents the # of cycles that has passed
     cycle: u64,
     /// Represents the items in queue
-    items: Arc<Mutex<Vec<DeferredDeletionItem<dyn Drop>>>>,
+    items: Arc<Mutex<Vec<DeferredDeletionItem<T>>>>,
 }
 
-impl DeferredDeletionQueue {
+impl<T> DeferredDeletionQueue<T> {
     pub fn new() -> Self {
         Self {
             cycle: 0,
@@ -44,25 +40,19 @@ impl DeferredDeletionQueue {
     }
 
     /// Queues item for deletion
-    pub fn enqueue_deletion<T: DeferredDeletable>(
-        &mut self,
-        resource: T,
-        deletion_function: Option<Box<dyn FnOnce()>>,
-    ) {
+    pub fn enqueue_deletion(&mut self, resource: T, deletion_function: Option<Box<dyn FnOnce()>>) {
         self.items.lock().unwrap().push(DeferredDeletionItem {
+            item: resource,
             end_cycle: T::MAX_CYCLES,
-            deletion_function,
-            resource: Some(resource),
         });
     }
 
     /// Scans the entire queue to finds items in queue that have reached their
     /// end cycle
     pub fn delete_expired_items(&mut self) {
-        self.items.lock().unwrap().unwrap().retain(|item| {
+        self.items.lock().unwrap().retain(|item| {
             if item.end_cycle >= self.cycle {
                 // Expired, run delete function and drop the item from queue
-                item.deletion_function();
                 false
             } else {
                 // Keep all items in queue that have not expired yet
@@ -76,5 +66,3 @@ impl DeferredDeletionQueue {
         self.cycle += 1;
     }
 }
-
-impl DeferredDeletionQueue {}

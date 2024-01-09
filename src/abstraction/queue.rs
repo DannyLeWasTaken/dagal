@@ -1,10 +1,11 @@
+use crate::abstraction::prelude as abstraction;
 use ash::vk;
 
-/// An abstraction for the queue object in Vulkan
+/// An abstraction for [vk::Queue]
 pub struct Queue {
     handle: vk::Queue,
-    queue_flags: vk::QueueFlags,
-    index: u32,
+    family_index: u32,
+    device: abstraction::Device,
 }
 
 impl Queue {
@@ -12,8 +13,8 @@ impl Queue {
 }
 
 impl Into<u32> for Queue {
-    /// Retrives the queue index for the related physical device
+    /// Retrieves the queue index for the related physical device
     fn into(self) -> u32 {
-        self.index
+        self.family_index
     }
 }

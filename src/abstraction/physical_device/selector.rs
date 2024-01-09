@@ -1,149 +1,107 @@
-use ash::vk;
 use crate::abstraction::prelude as abstraction;
+use ash::vk;
+/// Indicate queue requirements
+#[derive(Clone, PartialOrd, PartialEq)]
+pub struct QueueRequirements {
+    /// Flags of the queue in question
+    pub queue_flags: vk::QueueFlags,
 
-/// Selects a physical device object
+    /// Whether or not the queue should be dedicated
+    pub dedicated: bool,
+
+    /// How much many queues exist in the family
+    pub count: u32,
+}
 
 /// Describes the requirements for to select a physical device
-pub struct PhysicalDeviceSelectionRequirements {
-    features_1_0: vk::PhysicalDeviceFeatures,
-    features_1_1: vk::PhysicalDeviceVulkan11Features,
-    features_1_2: vk::PhysicalDeviceVulkan12Features,
-    features_1_3: vk::PhysicalDeviceVulkan13Features,
+#[derive(Clone, Default, PartialOrd, PartialEq)]
+pub struct PhysicalDeviceRequirements {
+    pub extensions: Vec<String>,
+    pub queues: Vec<QueueRequirements>,
 }
 
 // These are minimum requirements we expect any GPU should have.
-pub(crate) const MINIMUM_VIABLE_REQUIREMENTS: PhysicalDeviceSelectionRequirements = PhysicalDeviceSelectionRequirements {
-    features_1_0: vk::PhysicalDeviceFeatures {
-        robust_buffer_access: 0,
-        full_draw_index_uint32: 0,
-        image_cube_array: 0,
-        independent_blend: 0,
-        geometry_shader: 0,
-        tessellation_shader: 0,
-        sample_rate_shading: 0,
-        dual_src_blend: 0,
-        logic_op: 0,
-        multi_draw_indirect: 0,
-        draw_indirect_first_instance: 0,
-        depth_clamp: 0,
-        depth_bias_clamp: 0,
-        fill_mode_non_solid: 0,
-        depth_bounds: 0,
-        wide_lines: 0,
-        large_points: 0,
-        alpha_to_one: 0,
-        multi_viewport: 0,
-        sampler_anisotropy: 0,
-        texture_compression_etc2: 0,
-        texture_compression_astc_ldr: 0,
-        texture_compression_bc: 0,
-        occlusion_query_precise: 0,
-        pipeline_statistics_query: 0,
-        vertex_pipeline_stores_and_atomics: 0,
-        fragment_stores_and_atomics: 0,
-        shader_tessellation_and_geometry_point_size: 0,
-        shader_image_gather_extended: 0,
-        shader_storage_image_extended_formats: 0,
-        shader_storage_image_multisample: 0,
-        shader_storage_image_read_without_format: 0,
-        shader_storage_image_write_without_format: 0,
-        shader_uniform_buffer_array_dynamic_indexing: 0,
-        shader_sampled_image_array_dynamic_indexing: 0,
-        shader_storage_buffer_array_dynamic_indexing: 0,
-        shader_storage_image_array_dynamic_indexing: 0,
-        shader_clip_distance: 0,
-        shader_cull_distance: 0,
-        shader_float64: 0,
-        shader_int64: 0,
-        shader_int16: 0,
-        shader_resource_residency: 0,
-        shader_resource_min_lod: 0,
-        sparse_binding: 0,
-        sparse_residency_buffer: 0,
-        sparse_residency_image2_d: 0,
-        sparse_residency_image3_d: 0,
-        sparse_residency2_samples: 0,
-        sparse_residency4_samples: 0,
-        sparse_residency8_samples: 0,
-        sparse_residency16_samples: 0,
-        sparse_residency_aliased: 0,
-        variable_multisample_rate: 0,
-        inherited_queries: 0,
-    },
-    features_1_1: vk::PhysicalDeviceVulkan11Features {
-        s_type: Default::default(),
-        storage_buffer16_bit_access: 0,
-        uniform_and_storage_buffer16_bit_access: 0,
-        storage_push_constant16: 0,
-        storage_input_output16: 0,
-        multiview: 0,
-        multiview_geometry_shader: 0,
-        multiview_tessellation_shader: 0,
-        variable_pointers_storage_buffer: 0,
-        variable_pointers: 0,
-        protected_memory: 0,
-        sampler_ycbcr_conversion: 0,
-        shader_draw_parameters: 0,
-        ..Default::default()
-    },
-    features_1_2: vk::PhysicalDeviceVulkan12Features {
-        s_type: Default::default(),
-        sampler_mirror_clamp_to_edge: 0,
-        draw_indirect_count: 0,
-        storage_buffer8_bit_access: 0,
-        uniform_and_storage_buffer8_bit_access: 0,
-        storage_push_constant8: 0,
-        shader_buffer_int64_atomics: 0,
-        shader_shared_int64_atomics: 0,
-        shader_float16: 0,
-        shader_int8: 0,
-        // We expect dynamic rendering at a minimum
-        descriptor_indexing: 1,
-        shader_input_attachment_array_dynamic_indexing: 1,
-        shader_uniform_texel_buffer_array_dynamic_indexing: 0,
-        shader_storage_texel_buffer_array_dynamic_indexing: 0,
-        shader_uniform_buffer_array_non_uniform_indexing: 1,
-        shader_sampled_image_array_non_uniform_indexing: 1,
-        shader_storage_buffer_array_non_uniform_indexing: 1,
-        shader_storage_image_array_non_uniform_indexing: 1,
-        shader_input_attachment_array_non_uniform_indexing: 0,
-        shader_uniform_texel_buffer_array_non_uniform_indexing: 0,
-        shader_storage_texel_buffer_array_non_uniform_indexing: 0,
-        descriptor_binding_uniform_buffer_update_after_bind: 1,
-        descriptor_binding_sampled_image_update_after_bind: 1,
-        descriptor_binding_storage_image_update_after_bind: 1,
-        descriptor_binding_storage_buffer_update_after_bind: 1,
-        descriptor_binding_uniform_texel_buffer_update_after_bind: 0,
-        descriptor_binding_storage_texel_buffer_update_after_bind: 0,
-        descriptor_binding_update_unused_while_pending: 1,
-        descriptor_binding_partially_bound: 1,
-        descriptor_binding_variable_descriptor_count: 1,
-        runtime_descriptor_array: 0,
-        sampler_filter_minmax: 0,
-        scalar_block_layout: 0,
-        imageless_framebuffer: 0,
-        uniform_buffer_standard_layout: 0,
-        shader_subgroup_extended_types: 0,
-        separate_depth_stencil_layouts: 0,
-        host_query_reset: 0,
-        timeline_semaphore: 1,
-        buffer_device_address: 1,
-        buffer_device_address_capture_replay: 0,
-        buffer_device_address_multi_device: 0,
-        vulkan_memory_model: 0,
-        vulkan_memory_model_device_scope: 0,
-        vulkan_memory_model_availability_visibility_chains: 0,
-        shader_output_viewport_index: 0,
-        shader_output_layer: 0,
-        subgroup_broadcast_dynamic_id: 0,
-        ..Default::default()
-    },
-    features_1_3: Default::default(),
-};
+pub(crate) const MINIMUM_VIABLE_REQUIREMENTS: PhysicalDeviceRequirements =
+    PhysicalDeviceRequirements {
+        extensions: vec![
+            ash::extensions::khr::BufferDeviceAddress::name(),
+            ash::extensions::khr::DynamicRendering::name(),
+            ash::extensions::khr::Synchronization2::name(),
+        ]
+        .iter()
+        .map(|ext_name| ext_name.to_string_lossy().into_owned())
+        .collect(),
+        queues: Vec::new(),
+    };
 
-/// Struct to select a physical device
 pub struct PhysicalDeviceSelector {
-    instance: ash::Instance,
+    instance: abstraction::Instance,
 }
 
-impl PhysicalDeviceSelector {}
+/// Returns a [Vec] containing all [super::PhysicalDevice] that satisfy [PhysicalDeviceRequirements] given.
+/// # Queue safety
+/// While we do filter physical devices ensuring that:
+///
+/// 1) The queue family exists
+///
+/// 2) Enough of said queue can be
+/// allocated for each [QueueRequirements]
+///
+/// (2) is **not checked globally**. That is to say: if the total # of queues
+/// used by all [QueueRequirements] exceeds the queue count in the queue family, we don't detect that behavior.
+pub fn select_suitable_physical_device(
+    instance: abstraction::Instance,
+    gpu_requirements: Option<PhysicalDeviceRequirements>,
+) -> Vec<super::PhysicalDevice> {
+    // this will be narrowed down
+    let suitable_physical_devices: Vec<Option<super::PhysicalDevice>> = unsafe {
+        instance
+            .handle
+            .enumerate_physical_devices()
+            .expect("Failed to enumerate through physical devices!")
+    }
+    .iter()
+    .map(|pd| super::PhysicalDevice::new(instance.clone(), pd.clone(), gpu_requirements.clone()))
+    .collect();
+    let suitable_physical_devices: Vec<super::PhysicalDevice> = suitable_physical_devices
+        .into_iter()
+        .filter_map(|x| x)
+        .collect();
+    // Check for family queues
+    if let Some(gpu_requirements) = gpu_requirements {
+        let suitable_physical_devices: Vec<super::PhysicalDevice> =
+            suitable_physical_devices
+                .into_iter()
+                .filter_map(|physical_device| {
+                    let queue_families = physical_device.get_queue_families();
+                    let queue_requirements_met = gpu_requirements.queues.iter().all(
+                        |queue_requirements: &QueueRequirements| {
+                            let queue_possible: bool = queue_families.iter().any(|queue_family| {
+                                if ((queue_requirements.dedicated
+                                    && queue_requirements.queue_flags
+                                        == queue_family.queue_family_properties.queue_flags)
+                                    || (!queue_requirements.dedicated
+                                        && queue_family
+                                            .queue_family_properties
+                                            .queue_flags
+                                            .contains(queue_requirements.queue_flags)))
+                                    && queue_family.queue_family_properties.queue_count
+                                        >= queue_requirements.count
+                                {
+                                    return true;
+                                }
+                                false
+                            });
+                            queue_possible
+                        },
+                    );
+                    if queue_requirements_met {
+                        Some(physical_device)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+    }
+    suitable_physical_devices
+}

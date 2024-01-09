@@ -4,7 +4,7 @@
 //! - Reference counting using Arc
 //! - [utility::deferred_deletion_queue]
 //!
-//! It is important to note that both CAN be used.
+//! It is important to note that both CAN be used, **but at a significant performance overhead**.
 
 mod debugging;
 pub mod descriptors;

@@ -3,8 +3,6 @@ pub mod shader;
 pub mod storage;
 pub mod traits;
 
-pub use traits::*;
-
 use std::ffi::{c_char, c_void, CStr};
 
 /// Allows us to quickly get the respective p_next pointers

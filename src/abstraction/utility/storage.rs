@@ -2,7 +2,6 @@
 /// be backed by [Storage]. [Handle] can become out of date if it's location in storage
 /// has been overwritten (i.e. resource backed by handle has been mutated).
 use std::marker::PhantomData;
-use std::sync::{Arc, Weak};
 
 /// An opaque [Handle<T>] representing a resource state that MIGHT be backed in [Storage<T>]
 pub struct Handle<T> {
@@ -59,7 +58,7 @@ impl<T> Storage<T> {
 
     /// Insert a new resource into [Storage] without overriding any [Handle]
     pub fn push_back(&mut self, resource: T) -> Handle<T> {
-        self.storage.push(Arc::new(resource));
+        self.storage.push(resource);
         let id = self.storage.len() - 1;
         let revision = self.update_revision(id);
         Handle {
@@ -72,7 +71,7 @@ impl<T> Storage<T> {
     /// Override a resource and get a new [Handle] representing the new resource
     pub fn insert(&mut self, location: usize, resource: T) -> Handle<T> {
         let revision = self.update_revision(location);
-        self.storage.insert(location, Arc::new(resource));
+        self.storage.insert(location, resource);
         Handle {
             identifier: location as u64,
             revision,
@@ -82,14 +81,14 @@ impl<T> Storage<T> {
 
     /// Retrieve resource backed by [Handle]
     /// Returns [None] if the handle passed in is outdated or does not exist
-    pub fn get(&self, handle: Handle<T>) -> Option<&Arc<T>> {
+    pub fn get(&self, handle: Handle<T>) -> Option<&T> {
         // check if handle is out of date or not
         let storage_revision = self.revisions.get(handle.identifier as usize);
         if storage_revision.is_none() {
             return None;
         } else if let Some(storage_revision) = storage_revision {
-            if storage_revision == handle.revision {
-                return self.storage.get(*storage_revision);
+            if *storage_revision == handle.revision {
+                return self.storage.get(*storage_revision as usize);
             }
         }
         None
