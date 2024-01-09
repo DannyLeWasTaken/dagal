@@ -1,4 +1,5 @@
 use ash::vk;
+use crate::abstraction::prelude as abstraction;
 
 /// Selects a physical device object
 
@@ -11,7 +12,7 @@ pub struct PhysicalDeviceSelectionRequirements {
 }
 
 // These are minimum requirements we expect any GPU should have.
-const MINIMUM_VIABLE_REQUIREMENTS: PhysicalDeviceSelectionRequirements = PhysicalDeviceSelectionRequirements {
+pub(crate) const MINIMUM_VIABLE_REQUIREMENTS: PhysicalDeviceSelectionRequirements = PhysicalDeviceSelectionRequirements {
     features_1_0: vk::PhysicalDeviceFeatures {
         robust_buffer_access: 0,
         full_draw_index_uint32: 0,

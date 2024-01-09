@@ -3,6 +3,7 @@ mod selector;
 use std::collections::HashSet;
 use crate::abstraction::prelude as abstraction;
 use ash::vk;
+use ash::vk::{Handle};
 
 #[derive(Clone, Eq, PartialEq, PartialOrd, Hash)]
 pub struct PhysicalDevice {
@@ -69,6 +70,25 @@ impl PhysicalDevice {
         }
     }
 
+    pub unsafe fn get_handle(&self) -> &vk::PhysicalDevice {
+        &self.handle
+    }
+
+    pub fn get_features(&self) -> vk::PhysicalDeviceFeatures2 {
+        self.features
+    }
+
+    pub fn get_extensions(&self) -> &[vk::ExtensionProperties] {
+        self.extensions.as_slice()
+    }
+
+    /// Requests a queue with the given flags
+    /// `unique_queue` indicates if the queue should be entirely unique or not.
+    /// `quantity` indicates the # of said queue in question
+    pub fn request_queue(&mut self, flags: vk::QueueFlags, unique_queue: bool, quantity: u32) {
+
+    }
+
     pub fn queue_properties_exists(&self) {
         let mut queue_properties: Vec<vk::QueueFamilyProperties2> = Vec::new();
         unsafe {
@@ -89,5 +109,9 @@ impl PhysicalDevice {
             }
         }
         required_extensions.is_empty()
+    }
+
+    pub fn get_queues(&self) -> &[vk::QueueFamilyProperties2] {
+        self.queues.as_slice()
     }
 }

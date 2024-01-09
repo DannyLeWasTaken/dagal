@@ -10,7 +10,7 @@
 //! the public facing struct will make the Inner inaccessible.
 use std::sync::{Arc, Mutex};
 
-struct DeferredDeletionItem<T> {
+struct DeferredDeletionItem<T: ?Sized> {
     /// Cycle # which the deferred item is deleted.
     end_cycle: u64,
     /// Executes upon deletion, but may be optional as some structs may simply only
