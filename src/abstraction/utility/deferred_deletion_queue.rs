@@ -19,8 +19,11 @@ struct DeferredDeletionItem<T> {
 /// Any struct that implements [DeferredDeletable] can be pushed into a deferred deletion
 /// queue.
 pub trait DeferredDeletable {
-    /// Maximum number of cycles a struct should last for when submitted
+    /// Maximum number of cycles that a struct should last for it not interacted with
     const MAX_CYCLES: u64;
+
+    /// Keep the struct alive
+    fn wake();
 }
 
 /// This is a deferred deletion queue
