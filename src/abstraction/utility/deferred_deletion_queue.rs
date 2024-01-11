@@ -24,14 +24,14 @@ pub trait DeferredDeletable {
 }
 
 /// This is a deferred deletion queue
-pub struct DeferredDeletionQueue<T> {
+pub struct DeferredDeletionQueue<T: DeferredDeletable> {
     /// Represents the # of cycles that has passed
     cycle: u64,
     /// Represents the items in queue
     items: Arc<Mutex<Vec<DeferredDeletionItem<T>>>>,
 }
 
-impl<T> DeferredDeletionQueue<T> {
+impl<T: DeferredDeletable> DeferredDeletionQueue<T> {
     pub fn new() -> Self {
         Self {
             cycle: 0,
