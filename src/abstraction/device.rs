@@ -1,9 +1,10 @@
 use crate::abstraction::prelude as abstraction;
 use ash::vk;
 use ash::vk::TaggedStructure;
-use std::ffi::{c_char, CString};
+use std::ffi::{c_char, c_void, CString};
 use std::ptr;
 use std::sync::Arc;
+use crate::abstraction::utility::deferred_deletion_queue::DeferredDeletionQueue;
 
 /// Provides information on queue family on the device
 pub struct DeviceFamilyQueue {
@@ -45,10 +46,10 @@ pub struct QueueRequest {
 }
 
 impl Device {
+    /// Create a new device
     pub fn new(
-        instance: ash::Instance,
+        instance: &abstraction::Instance,
         physical_device: abstraction::PhysicalDevice,
-        device_features: vk::PhysicalDeviceFeatures2,
     ) -> Result<Self, vk::Result> {
         // TODO: allow user to manually pick and choose with queues are used
         let gpu_requirements = physical_device.get_gpu_requirements();
@@ -110,27 +111,32 @@ impl Device {
                 })
             })
             .collect();
-        let c_ptrs: Vec<*const c_char> = gpu_requirements
+        let c_strs: Vec<CString> = gpu_requirements
             .extensions
             .iter()
-            .map(|ext| CString::new(ext.as_str()).unwrap().into_raw() as *const c_char)
+            .map(|ext| CString::new(ext.as_str()).unwrap())
             .collect();
-        //
+        let c_ptrs: Vec<*const c_char> = c_strs
+            .iter()
+            .map(|ext| ext.as_ptr() as *const c_char)
+            .collect();
+        // rebind pointers
+        let (mut features, mut features_1_1, mut features_1_2, mut features_1_3) = physical_device.get_features();
+        features.p_next = abstraction::utility::p_next_mut(&mut features_1_1);
+        features_1_1.p_next = abstraction::utility::p_next_mut(&mut features_1_2);
+        features_1_2.p_next = abstraction::utility::p_next_mut(&mut features_1_3);
 
         let device_ci = vk::DeviceCreateInfo {
             s_type: vk::DeviceCreateInfo::STRUCTURE_TYPE,
-            p_next: abstraction::utility::p_next(&device_features),
-            flags: vk::DeviceCreateFlags::empty(),
+            p_next: &features as *const _ as *const c_void,
             queue_create_info_count: queue_cis.len() as u32,
             p_queue_create_infos: queue_cis.as_ptr(),
             enabled_extension_count: gpu_requirements.extensions.len() as u32,
             pp_enabled_extension_names: c_ptrs.as_ptr(),
-            p_enabled_features: ptr::null(),
-
             ..Default::default()
         };
         let handle = unsafe {
-            instance.create_device(physical_device.get_handle().clone(), &device_ci, None)
+            instance.get_vk_instance().create_device(physical_device.get_handle().clone(), &device_ci, None)
         };
         if handle.is_err() {
             return Err(handle.err().unwrap());
@@ -139,7 +145,7 @@ impl Device {
         Ok(Self {
             handle: Arc::new(DeviceInner {
                 handle,
-                physical_device_features: physical_device.get_features(),
+                physical_device_features: physical_device.get_features().0,
                 queue_families: vec![],
             }),
         })

@@ -6,6 +6,7 @@ use ash::vk;
 use ash::vk::Handle;
 use std::collections::HashSet;
 use std::ffi::CString;
+use std::ptr;
 
 pub struct QueueFamilyInfo {
     /// Handle towards underlying data
@@ -31,7 +32,13 @@ pub struct PhysicalDevice {
     /// Reference to [crate::abstraction::instance]
     instance: abstraction::Instance,
     /// Requirements listed out for the GPU
-    gpu_requirements: selector::PhysicalDeviceRequirements,
+    gpu_requirements: PhysicalDeviceRequirements,
+}
+pub struct PhysicalDeviceFeatures {
+    handle: vk::PhysicalDeviceFeatures2,
+    features_1_1: vk::PhysicalDeviceVulkan12Features,
+    features_1_2: vk::PhysicalDeviceVulkan12Features,
+    features_1_3: vk::PhysicalDeviceVulkan13Features,
 }
 
 impl PhysicalDevice {
@@ -67,21 +74,26 @@ impl PhysicalDevice {
 
         unsafe {
             instance
-                .handle
+                .get_vk_instance()
                 .get_physical_device_features2(physical_device.clone(), &mut features_2);
         };
 
         // Get all extensions of the device
         let extensions = unsafe {
             instance
-                .handle
+                .get_vk_instance()
                 .enumerate_device_extension_properties(physical_device.clone())
                 .unwrap()
         };
+        // Deal with dangling pointers
+        features_2.p_next = ptr::null_mut();
+        features_1_1.p_next = ptr::null_mut();
+        features_1_2.p_next = ptr::null_mut();
+        features_1_3.p_next = ptr::null_mut();
 
         // Get all queues of the physical device
-        let queues = PhysicalDevice::retrieve_vk_queues(&instance.handle, physical_device.clone());
-
+        let queues = PhysicalDevice::retrieve_vk_queues(instance.get_vk_instance(), physical_device.clone());
+        let gpu_requirements_exist = gpu_requirements.is_some();
         let physical_device = Self {
             handle: physical_device,
             features: features_2,
@@ -90,25 +102,23 @@ impl PhysicalDevice {
             features_1_3,
             extensions,
             queues,
-            instance,
-            gpu_requirements: gpu_requirements.unwrap_or_default(),
+            instance: instance.clone(),
+            gpu_requirements: gpu_requirements.clone().unwrap_or_default(),
         };
-
         // Ensure the most base requirements are met
         if !physical_device.meets_base_requirements() {
             return None;
         }
-        if gpu_requirements.is_some() && !physical_device.meets_requirements(None) {
+        if gpu_requirements_exist && !physical_device.meets_requirements(None) {
             return None;
         }
-
         Some(physical_device)
     }
 
     /// Checks if the base minimum requirements are even met in the first place
     pub(crate) fn meets_base_requirements(&self) -> bool {
         // We will be checking for the most basics of requirements
-        if self.has_extensions(selector::MINIMUM_VIABLE_REQUIREMENTS.extensions.as_slice()) {
+        if self.has_extensions(get_minimum_viable_requirements().extensions.as_slice()) {
             let features_1_1 = self.features_1_1;
             let features_1_2 = self.features_1_2;
             let features_1_3 = self.features_1_3;
@@ -150,8 +160,8 @@ impl PhysicalDevice {
         &self.handle
     }
 
-    pub fn get_features(&self) -> vk::PhysicalDeviceFeatures2 {
-        self.features
+    pub fn get_features(&self) -> (vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceVulkan11Features, vk::PhysicalDeviceVulkan12Features, vk::PhysicalDeviceVulkan13Features) {
+        (self.features, self.features_1_1, self.features_1_2, self.features_1_3)
     }
 
     pub fn get_extensions(&self) -> &[vk::ExtensionProperties] {
@@ -166,7 +176,7 @@ impl PhysicalDevice {
         let mut queue_properties: Vec<vk::QueueFamilyProperties2> = Vec::new();
         unsafe {
             self.instance
-                .handle
+                .get_vk_instance()
                 .get_physical_device_queue_family_properties2(self.handle, &mut queue_properties)
         };
     }
