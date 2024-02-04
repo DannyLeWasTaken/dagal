@@ -6,14 +6,19 @@ use ash::vk;
 use ash::vk::Handle;
 use std::collections::HashSet;
 use std::ffi::CString;
+use std::mem::swap;
 use std::ptr;
 
+#[derive(Clone)]
 pub struct QueueFamilyInfo {
     /// Handle towards underlying data
     pub(crate) handle: vk::QueueFamilyProperties2,
 
     /// The family index of the queue family
     pub(crate) index: u32,
+
+    /// Whether or not it is presentable in the queue
+    pub(crate) presentable: bool,
 }
 
 #[derive(Clone)]
@@ -28,7 +33,7 @@ pub struct PhysicalDevice {
     /// Extensions available on the [PhysicalDevice]
     extensions: Vec<vk::ExtensionProperties>,
     /// A vector containing all the [crate::abstraction::queue] of the physical device
-    queues: Vec<vk::QueueFamilyProperties2>,
+    queues: Vec<QueueFamilyInfo>,
     /// Reference to [crate::abstraction::instance]
     instance: abstraction::Instance,
     /// Requirements listed out for the GPU
@@ -61,6 +66,7 @@ impl PhysicalDevice {
         instance: abstraction::Instance,
         physical_device: vk::PhysicalDevice,
         gpu_requirements: Option<selector::PhysicalDeviceRequirements>,
+        surface: Option<abstraction::Surface>
     ) -> Option<Self> {
         // Get all features of the device
         let mut features_2 = vk::PhysicalDeviceFeatures2::default();
@@ -93,6 +99,26 @@ impl PhysicalDevice {
 
         // Get all queues of the physical device
         let queues = PhysicalDevice::retrieve_vk_queues(instance.get_vk_instance(), physical_device.clone());
+        let queues: Vec<QueueFamilyInfo> = queues.into_iter().enumerate().map(|(index, queue)| {
+            QueueFamilyInfo {
+                handle: queue,
+                index: index as u32,
+                presentable: unsafe {
+                    if let Some(surface) = surface {
+                        if unsafe {
+                            surface.get_loader().get_handle().get_handle().get_physical_device_surface_support(
+                                physical_device,
+                                index as u32,
+                                surface.get_handle()
+                            ).unwrap()
+                        } {
+                            true
+                        }
+                    }
+                    false
+                },
+            }
+        }).collect::<Vec<QueueFamilyInfo>>();
         let gpu_requirements_exist = gpu_requirements.is_some();
         let physical_device = Self {
             handle: physical_device,
